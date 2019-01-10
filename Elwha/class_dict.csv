@@ -1,0 +1,9 @@
+name,r,g,b
+veg,0,255,0
+terrain,102,51,0
+water,0,0,255
+wood,153,0,204
+sediment,255,255,255
+road,255,0,0
+null,0,0,0
+anthro,255,0,255
