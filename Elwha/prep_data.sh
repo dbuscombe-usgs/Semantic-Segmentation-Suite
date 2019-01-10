@@ -9,10 +9,10 @@ mkdir label_tiles
 mkdir R_G_B_tiles
 
 ##split rasters into small tiles
-python3 split_rasters_labels.py 
-python3 split_rasters.py
+python Elwha/split_rasters_labels.py 
+python Elwha/split_rasters.py
 
 # randomly split imagery into categories
-python3 split_test_val_train.py
+python Elwha/split_test_val_train.py
 
-python3 list_codes.py
+python Elwha/list_codes.py
