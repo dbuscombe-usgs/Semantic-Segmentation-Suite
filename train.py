@@ -34,7 +34,7 @@ parser.add_argument('--checkpoint_step', type=int, default=5, help='How often to
 parser.add_argument('--validation_step', type=int, default=1, help='How often to perform validation (epochs)')
 parser.add_argument('--image', type=str, default=None, help='The image you want to predict on. Only valid in "predict" mode.')
 parser.add_argument('--continue_training', type=str2bool, default=False, help='Whether to continue training from a checkpoint')
-parser.add_argument('--dataset', type=str, default="CamVid", help='Dataset you are using.')
+parser.add_argument('--dataset', type=str, default="Geomorph_8class", help='Dataset you are using.')
 parser.add_argument('--crop_height', type=int, default=512, help='Height of cropped input image to network')
 parser.add_argument('--crop_width', type=int, default=512, help='Width of cropped input image to network')
 parser.add_argument('--batch_size', type=int, default=1, help='Number of images in each batch')
@@ -47,6 +47,30 @@ parser.add_argument('--model', type=str, default="FC-DenseNet56", help='The mode
 parser.add_argument('--frontend', type=str, default="ResNet101", help='The frontend you are using. See frontend_builder.py for supported models')
 args = parser.parse_args()
 
+### https://forums.fast.ai/t/unbalanced-classes-in-image-segmentation/18289/2
+#def weighted_categorical_crossentropy(weights):
+#    """ weighted_categorical_crossentropy
+
+#        Args:
+#            * weights<ktensor|nparray|list>: crossentropy weights
+#        Returns:
+#            * weighted categorical crossentropy function
+#    """
+#    if isinstance(weights,list) or isinstance(np.ndarray):
+#        weights=K.variable(weights)
+
+#    def loss(target,output,from_logits=False):
+#        if not from_logits:
+#            output /= tf.reduce_sum(output,
+#                                    len(output.get_shape()) - 1,
+#                                    True)
+#            _epsilon = tf.convert_to_tensor(K.epsilon(), dtype=output.dtype.base_dtype)
+#            output = tf.clip_by_value(output, _epsilon, 1. - _epsilon)
+#            weighted_losses = target * tf.log(output) * weights
+#            return - tf.reduce_sum(weighted_losses,len(output.get_shape()) - 1)
+#        else:
+#            raise ValueError('WeightedCategoricalCrossentropy: not valid with logits')
+#    return loss
 
 def data_augmentation(input_image, output_image):
     # Data augmentation
@@ -94,9 +118,18 @@ net_output = tf.placeholder(tf.float32,shape=[None,None,None,num_classes])
 
 network, init_fn = model_builder.build_model(model_name=args.model, frontend=args.frontend, net_input=net_input, num_classes=num_classes, crop_width=args.crop_width, crop_height=args.crop_height, is_training=True)
 
-loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=network, labels=net_output))
+loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits=network, labels=net_output)) ##DB: v2
 
-opt = tf.train.RMSPropOptimizer(learning_rate=0.0001, decay=0.995).minimize(loss, var_list=[var for var in tf.trainable_variables()])
+opt = tf.train.RMSPropOptimizer(learning_rate=0.0001, decay=0.995, centered=True).minimize(loss, var_list=[var for var in tf.trainable_variables()])
+#  learning_rate: A Tensor or a floating point value.  The learning rate.
+#  decay: Discounting factor for the history/coming gradient
+#  momentum: A scalar tensor.
+#  epsilon: Small value to avoid zero denominator.
+#  use_locking: If True use locks for update operation.
+#  centered: If True, gradients are normalized by the estimated variance of
+#    the gradient; if False, by the uncentered second moment. Setting this to
+#    True may help with training, but is slightly more expensive in terms of
+#    computation and memory. Defaults to False.
 
 saver=tf.train.Saver(max_to_keep=1000)
 sess.run(tf.global_variables_initializer())
@@ -117,7 +150,6 @@ if args.continue_training:
 # Load the data
 print("Loading the data ...")
 train_input_names,train_output_names, val_input_names, val_output_names, test_input_names, test_output_names = utils.prepare_data(dataset_dir=args.dataset)
-
 
 
 print("\n***** Begin training *****")
@@ -192,6 +224,18 @@ for epoch in range(args.epoch_start_i, args.num_epochs):
         else:
             input_image_batch = np.squeeze(np.stack(input_image_batch, axis=1))
             output_image_batch = np.squeeze(np.stack(output_image_batch, axis=1))
+
+#        #DB:
+#        nx, ny = np.shape(output_image)
+#        weights = np.zeros((1,num_classes))
+#        for k in range(num_classes):
+#           w=np.sum(output_image==k)/(nx*ny)
+#           w=np.log(C*w)
+#           weights[k] = np.max(w,1)
+
+#        weights = np.log((nx*ny)/total_for_category)
+#        loss = weighted_categorical_crossentropy(weights)
+#        opt = tf.train.RMSPropOptimizer(learning_rate=0.0001, decay=0.995).minimize(loss, var_list=[var for var in tf.trainable_variables()])
 
         # Do the training
         _,current=sess.run([opt,loss],feed_dict={net_input:input_image_batch,net_output:output_image_batch})
