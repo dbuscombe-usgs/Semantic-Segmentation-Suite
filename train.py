@@ -9,6 +9,93 @@ import random
 import os, sys
 import subprocess
 
+## DB
+from skimage.color.adapt_rgb import adapt_rgb, each_channel
+from skimage.filters import median
+from skimage.morphology import disk
+
+@adapt_rgb(each_channel)
+def median_each(image, disksize=10):
+    return median(image, disk(disksize))
+    
+    
+import pydensecrf.densecrf as dcrf
+from pydensecrf.utils import create_pairwise_bilateral, unary_from_labels, unary_from_softmax
+
+# =========================================================
+def getCRF(image, Lc, theta, n_iter, N, compat_spat=12, compat_col=40, scale=5, prob=0.5):
+
+#        n_iters: number of iterations of MAP inference.
+#        sxy_gaussian: standard deviations for the location component
+#            of the colour-independent term.
+#        compat_gaussian: label compatibilities for the colour-independent
+#            term (can be a number, a 1D array, or a 2D array).
+#        kernel_gaussian: kernel precision matrix for the colour-independent
+#            term (can take values CONST_KERNEL, DIAG_KERNEL, or FULL_KERNEL).
+#        normalisation_gaussian: normalisation for the colour-independent term
+#            (possible values are NO_NORMALIZATION, NORMALIZE_BEFORE, NORMALIZE_AFTER, NORMALIZE_SYMMETRIC).
+#        sxy_bilateral: standard deviations for the location component of the colour-dependent term.
+#        compat_bilateral: label compatibilities for the colour-dependent
+#            term (can be a number, a 1D array, or a 2D array).
+#        srgb_bilateral: standard deviations for the colour component
+#            of the colour-dependent term.
+#        kernel_bilateral: kernel precision matrix for the colour-dependent term
+#            (can take values CONST_KERNEL, DIAG_KERNEL, or FULL_KERNEL).
+#        normalisation_bilateral: normalisation for the colour-dependent term
+#            (possible values are NO_NORMALIZATION, NORMALIZE_BEFORE, NORMALIZE_AFTER, NORMALIZE_SYMMETRIC).
+
+      H = image.shape[0]
+      W = image.shape[1]
+
+      d = dcrf.DenseCRF2D(H, W, N+1)
+      U = unary_from_labels(Lc.astype('int'), N+1, gt_prob= prob)
+
+      d.setUnaryEnergy(U)
+
+      del U
+
+      # This potential penalizes small pieces of segmentation that are
+      # spatially isolated -- enforces more spatially consistent segmentations
+      # This adds the color-independent term, features are the locations only.
+      # sxy = The scaling factors per dimension.
+      d.addPairwiseGaussian(sxy=(theta,theta), compat=compat_spat, kernel=dcrf.DIAG_KERNEL, #compat=6
+                      normalization=dcrf.NORMALIZE_SYMMETRIC)
+
+      # sdims = The scaling factors per dimension.
+      # schan = The scaling factors per channel in the image.
+      # This creates the color-dependent features and then add them to the CRF
+      feats = create_pairwise_bilateral(sdims=(theta, theta), schan=(scale, scale, scale), #11,11,11
+                                  img=image, chdim=2)
+
+      del image
+
+      d.addPairwiseEnergy(feats, compat=compat_col, #20
+                    kernel=dcrf.DIAG_KERNEL,
+                    normalization=dcrf.NORMALIZE_SYMMETRIC)
+      del feats
+
+      Q = d.inference(n_iter)
+
+	  ## uncomment if you want an images of the posterior probabilities per label
+      #preds = np.array(Q, dtype=np.float32).reshape(
+      #  (len(label_lines)+1, nx, ny)).transpose(1, 2, 0)
+      #preds = np.expand_dims(preds, 0)
+      #preds = np.squeeze(preds)
+
+      return np.argmax(Q, axis=0).reshape((H, W)) #, preds
+
+
+compat_col = 300
+theta = 300
+scale = 1
+n_iter = 30
+compat_spat =11
+prob = 0.5 
+    
+    
+## DB 
+
+
 # use 'Agg' on matplotlib so that plots could be generated even without Xserver
 # running
 import matplotlib
@@ -178,7 +265,7 @@ num_vals = min(args.num_val_images, len(val_input_names))
 
 # Set random seed to make sure models are validated on the same validation images.
 # So you can compare the results of different models more intuitively.
-random.seed(16)
+random.seed(2019)
 val_indices=random.sample(range(0,len(val_input_names)),num_vals)
 
 # Do the training here
@@ -206,14 +293,14 @@ for epoch in range(args.epoch_start_i, args.num_epochs):
             id = id_list[index]
             input_image = utils.load_image(train_input_names[id])
             output_image = utils.load_image(train_output_names[id])
-
+                        
             with tf.device('/cpu:0'):
                 input_image, output_image = data_augmentation(input_image, output_image)
 
 
                 # Prep the data. Make sure the labels are in one-hot format
-                input_image = np.float32(input_image) / 255.0
-                output_image = np.float32(helpers.one_hot_it(label=output_image, label_values=label_values))
+                input_image = np.float16(input_image) / 255.0 ##32 DB
+                output_image = np.float16(helpers.one_hot_it(label=output_image, label_values=label_values)) ##32 DB
 
                 input_image_batch.append(np.expand_dims(input_image, axis=0))
                 output_image_batch.append(np.expand_dims(output_image, axis=0))
@@ -283,14 +370,17 @@ for epoch in range(args.epoch_start_i, args.num_epochs):
             gt = utils.load_image(val_output_names[ind])[:args.crop_height, :args.crop_width]
             gt = helpers.reverse_one_hot(helpers.one_hot_it(gt, label_values))
 
-            # st = time.time()
-
             output_image = sess.run(network,feed_dict={net_input:input_image})
-
 
             output_image = np.array(output_image[0,:,:,:])
             output_image = helpers.reverse_one_hot(output_image)
-            out_vis_image = helpers.colour_code_segmentation(output_image, label_values)
+
+            ### DB            
+            #output_image = median_each(output_image, disksize=5)  ##DB
+            
+            ### DB
+                        
+            out_vis_image = helpers.colour_code_segmentation(output_image, label_values)            
 
             accuracy, class_accuracies, prec, rec, f1, iou = utils.evaluate_segmentation(pred=output_image, label=gt, num_classes=num_classes)
 
@@ -308,7 +398,9 @@ for epoch in range(args.epoch_start_i, args.num_epochs):
             iou_list.append(iou)
 
             gt = helpers.colour_code_segmentation(gt, label_values)
-
+            
+            gt = median_each(gt, disksize=5)  ##DB
+            
             file_name = os.path.basename(val_input_names[ind])
             file_name = os.path.splitext(file_name)[0]
             cv2.imwrite("%s/%04d/%s_pred.png"%("checkpoints",epoch, file_name),cv2.cvtColor(np.uint8(out_vis_image), cv2.COLOR_RGB2BGR))
