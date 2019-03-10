@@ -156,50 +156,53 @@ with tf.device('/cpu:0'):
     out_vis_image = helpers.colour_code_segmentation(output_image, label_values)
    
     ##DB 
-    mask1 = ((out_vis_image[:,:,0]==0).astype('int') + (out_vis_image[:,:,1]==0).astype('int')  + (out_vis_image[:,:,2]==255).astype('int')  == 3).astype('int')
+    if args.dataset.startswith("Geomorph"):
+       mask1 = ((out_vis_image[:,:,0]==0).astype('int') + (out_vis_image[:,:,1]==0).astype('int')  + (out_vis_image[:,:,2]==255).astype('int')  == 3).astype('int')
 
-    #sand
-    mask2 = ((out_vis_image[:,:,0]==255).astype('int') + (out_vis_image[:,:,1]==255).astype('int')  + (out_vis_image[:,:,2]==0).astype('int')  == 3).astype('int')
+       #sand
+       mask2 = ((out_vis_image[:,:,0]==255).astype('int') + (out_vis_image[:,:,1]==255).astype('int')  + (out_vis_image[:,:,2]==0).astype('int')  == 3).astype('int')
 
-    ##veg
-    mask3 = ((out_vis_image[:,:,0]==0).astype('int') + (out_vis_image[:,:,1]==255).astype('int')  + (out_vis_image[:,:,2]==0).astype('int')  == 3).astype('int')
+       ##veg
+       mask3 = ((out_vis_image[:,:,0]==0).astype('int') + (out_vis_image[:,:,1]==255).astype('int')  + (out_vis_image[:,:,2]==0).astype('int')  == 3).astype('int')
 
-    #br
-    mask4 = ((out_vis_image[:,:,0]==128).astype('int') + (out_vis_image[:,:,1]==0).astype('int')  + (out_vis_image[:,:,2]==0).astype('int')  == 3).astype('int')
+       #br
+       mask4 = ((out_vis_image[:,:,0]==128).astype('int') + (out_vis_image[:,:,1]==0).astype('int')  + (out_vis_image[:,:,2]==0).astype('int')  == 3).astype('int')
 
-    #df
-    mask5 = ((out_vis_image[:,:,0]==255).astype('int') + (out_vis_image[:,:,1]==0).astype('int')  + (out_vis_image[:,:,2]==255).astype('int')  == 3).astype('int')
+       #df
+       mask5 = ((out_vis_image[:,:,0]==255).astype('int') + (out_vis_image[:,:,1]==0).astype('int')  + (out_vis_image[:,:,2]==255).astype('int')  == 3).astype('int')
 
-    #at
-    mask6 = ((out_vis_image[:,:,0]==128).astype('int') + (out_vis_image[:,:,1]==0).astype('int')  + (out_vis_image[:,:,2]==255).astype('int')  == 3).astype('int')
+       #at
+       mask6 = ((out_vis_image[:,:,0]==128).astype('int') + (out_vis_image[:,:,1]==0).astype('int')  + (out_vis_image[:,:,2]==255).astype('int')  == 3).astype('int')
 
-    #null
-    mask7 = ((out_vis_image[:,:,0]==0).astype('int') + (out_vis_image[:,:,1]==0).astype('int')  + (out_vis_image[:,:,2]==0).astype('int')  == 3).astype('int')
+       #null
+       mask7 = ((out_vis_image[:,:,0]==0).astype('int') + (out_vis_image[:,:,1]==0).astype('int')  + (out_vis_image[:,:,2]==0).astype('int')  == 3).astype('int')
 
-    #gb
-    mask8 = ((out_vis_image[:,:,0]==128).astype('int') + (out_vis_image[:,:,1]==128).astype('int')  + (out_vis_image[:,:,2]==128).astype('int')  == 3).astype('int')
+       #gb
+       mask8 = ((out_vis_image[:,:,0]==128).astype('int') + (out_vis_image[:,:,1]==128).astype('int')  + (out_vis_image[:,:,2]==128).astype('int')  == 3).astype('int')
 
-    #other
-    mask8 = ((out_vis_image[:,:,0]==255).astype('int') + (out_vis_image[:,:,1]==128).astype('int')  + (out_vis_image[:,:,2]==128).astype('int')  == 3).astype('int')
+       #other
+       mask9 = ((out_vis_image[:,:,0]==255).astype('int') + (out_vis_image[:,:,1]==128).astype('int')  + (out_vis_image[:,:,2]==128).astype('int')  == 3).astype('int')
     
-    nx, ny, nz = np.shape(out_vis_image)
-    lab = np.zeros((nx, ny), dtype=np.int)
-    lab[mask1==1]=1
-    lab[mask2==1]=2
-    lab[mask3==1]=3
-    lab[mask4==1]=4
-    lab[mask5==1]=5
-    lab[mask6==1]=6
-    lab[mask7==1]=7
-    lab[mask8==1]=8   
-    
+       nx, ny, nz = np.shape(out_vis_image)
+       lab = np.zeros((nx, ny), dtype=np.int)
+       lab[mask1==1]=1
+       lab[mask2==1]=2
+       lab[mask3==1]=3
+       lab[mask4==1]=4
+       lab[mask5==1]=5
+       lab[mask6==1]=6
+       lab[mask7==1]=7
+       lab[mask8==1]=8   
+       lab[mask9==1]=9 
+        
+       N = 9 ##number categories    
     
     idx = np.random.randint(nx, size=int(nx/2))
     for k in idx:
        lab[:,k] = np.zeros(ny)
        lab[k,:] = np.zeros(ny)
    
-    N = 9 ##number categories
+
     
     resr = getCRF(loaded_image, lab, theta, n_iter, N, compat_spat, compat_col, scale, prob)+1
  
@@ -207,60 +210,60 @@ with tf.device('/cpu:0'):
     resr = getCRF(loaded_image, resr, theta, n_iter, N, compat_spat, compat_col, scale, prob)+1
             
     out_vis_image = np.zeros((nx, ny, 3), dtype=np.int)
-    #water
-    mask = (resr==1).astype('int')
-    out_vis_image[:,:,0][mask==1]=0
-    out_vis_image[:,:,1][mask==1]=0
-    out_vis_image[:,:,2][mask==1]=255
+    if args.dataset.startswith("Geomorph"):    
+       #water
+       mask = (resr==1).astype('int')
+       out_vis_image[:,:,0][mask==1]=0
+       out_vis_image[:,:,1][mask==1]=0
+       out_vis_image[:,:,2][mask==1]=255
 
-    #sand
-    mask = (resr==2).astype('int')
-    out_vis_image[:,:,0][mask==1]=255
-    out_vis_image[:,:,1][mask==1]=255
-    out_vis_image[:,:,2][mask==1]=0
+       #sand
+       mask = (resr==2).astype('int')
+       out_vis_image[:,:,0][mask==1]=255
+       out_vis_image[:,:,1][mask==1]=255
+       out_vis_image[:,:,2][mask==1]=0
 
-    #veg
-    mask = (resr==3).astype('int')
-    out_vis_image[:,:,0][mask==1]=0
-    out_vis_image[:,:,1][mask==1]=255
-    out_vis_image[:,:,2][mask==1]=0
+       #veg
+       mask = (resr==3).astype('int')
+       out_vis_image[:,:,0][mask==1]=0
+       out_vis_image[:,:,1][mask==1]=255
+       out_vis_image[:,:,2][mask==1]=0
 
-    #br
-    mask = (resr==4).astype('int')
-    out_vis_image[:,:,0][mask==1]=128
-    out_vis_image[:,:,1][mask==1]=0
-    out_vis_image[:,:,2][mask==1]=0
+       #br
+       mask = (resr==4).astype('int')
+       out_vis_image[:,:,0][mask==1]=128
+       out_vis_image[:,:,1][mask==1]=0
+       out_vis_image[:,:,2][mask==1]=0
 
-    #df
-    mask = (resr==5).astype('int')
-    out_vis_image[:,:,0][mask==1]=255
-    out_vis_image[:,:,1][mask==1]=0
-    out_vis_image[:,:,2][mask==1]=255
+       #df
+       mask = (resr==5).astype('int')
+       out_vis_image[:,:,0][mask==1]=255
+       out_vis_image[:,:,1][mask==1]=0
+       out_vis_image[:,:,2][mask==1]=255
 
-    #at
-    mask = (resr==6).astype('int')
-    out_vis_image[:,:,0][mask==1]=128
-    out_vis_image[:,:,1][mask==1]=0
-    out_vis_image[:,:,2][mask==1]=255
+       #at
+       mask = (resr==6).astype('int')
+       out_vis_image[:,:,0][mask==1]=128
+       out_vis_image[:,:,1][mask==1]=0
+       out_vis_image[:,:,2][mask==1]=255
 
-    #null
-    mask = (resr==7).astype('int')
-    out_vis_image[:,:,0][mask==1]=0
-    out_vis_image[:,:,1][mask==1]=0
-    out_vis_image[:,:,2][mask==1]=0
+       #null
+       mask = (resr==7).astype('int')
+       out_vis_image[:,:,0][mask==1]=0
+       out_vis_image[:,:,1][mask==1]=0
+       out_vis_image[:,:,2][mask==1]=0
 
-    #gb
-    mask = (resr==8).astype('int')
-    out_vis_image[:,:,0][mask==1]=128
-    out_vis_image[:,:,1][mask==1]=128
-    out_vis_image[:,:,2][mask==1]=128     
+       #gb
+       mask = (resr==8).astype('int')
+       out_vis_image[:,:,0][mask==1]=128
+       out_vis_image[:,:,1][mask==1]=128
+       out_vis_image[:,:,2][mask==1]=128     
 
-    #other
-    mask = (resr==8).astype('int')
-    out_vis_image[:,:,0][mask==1]=255
-    out_vis_image[:,:,1][mask==1]=128
-    out_vis_image[:,:,2][mask==1]=128  
- 
+       #other
+       mask = (resr==8).astype('int')
+       out_vis_image[:,:,0][mask==1]=255
+       out_vis_image[:,:,1][mask==1]=128
+       out_vis_image[:,:,2][mask==1]=128  
 
             
     ##DB    
