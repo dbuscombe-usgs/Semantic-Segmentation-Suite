@@ -325,7 +325,7 @@ for epoch in range(args.epoch_start_i, args.num_epochs):
 
             gt = helpers.colour_code_segmentation(gt, label_values)
             
-            gt = median_each(gt, disksize=5)  ##DB
+            #gt = median_each(gt, disksize=5)  ##DB
             
             file_name = os.path.basename(val_input_names[ind])
             file_name = os.path.splitext(file_name)[0]
@@ -396,6 +396,8 @@ for epoch in range(args.epoch_start_i, args.num_epochs):
     ax3.set_ylabel("Current IoU")
 
     plt.savefig('iou_vs_epochs.png')
+	
+	plt.close('all') ##DB
 
 
 
