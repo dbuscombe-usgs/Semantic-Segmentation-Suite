@@ -1,3 +1,0 @@
-Make function that cycles through all CRF settings and averages (or otherwise improve manual segs)
-
-Make function to convert label image to RGB
