@@ -396,8 +396,7 @@ for epoch in range(args.epoch_start_i, args.num_epochs):
     ax3.set_ylabel("Current IoU")
 
     plt.savefig('iou_vs_epochs.png')
-	
-	plt.close('all') ##DB
+    plt.close('all') ##DB
 
 
 
