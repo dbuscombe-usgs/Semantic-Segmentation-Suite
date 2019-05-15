@@ -17,8 +17,6 @@ from skimage.morphology import disk
 @adapt_rgb(each_channel)
 def median_each(image, disksize=10):
     return median(image, disk(disksize))
-    
-    
 ## DB 
 
 
@@ -325,7 +323,7 @@ for epoch in range(args.epoch_start_i, args.num_epochs):
 
             gt = helpers.colour_code_segmentation(gt, label_values)
             
-            #gt = median_each(gt, disksize=5)  ##DB
+            gt = median_each(gt, disksize=5)  ##DB
             
             file_name = os.path.basename(val_input_names[ind])
             file_name = os.path.splitext(file_name)[0]
