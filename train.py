@@ -300,7 +300,7 @@ for epoch in range(args.epoch_start_i, args.num_epochs):
             output_image = helpers.reverse_one_hot(output_image)
 
             ### DB            
-            #output_image = median_each(output_image, disksize=5)  ##DB
+            output_image = median_each(output_image, disksize=5)  ##DB
             
             ### DB
                         
@@ -323,7 +323,7 @@ for epoch in range(args.epoch_start_i, args.num_epochs):
 
             gt = helpers.colour_code_segmentation(gt, label_values)
             
-            gt = median_each(gt, disksize=5)  ##DB
+            ##gt = median_each(gt, disksize=5)  ##DB
             
             file_name = os.path.basename(val_input_names[ind])
             file_name = os.path.splitext(file_name)[0]
