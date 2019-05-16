@@ -2,6 +2,5 @@ water
 sand
 bedrocktalus
 debrisfan
-null
 veg
 other
