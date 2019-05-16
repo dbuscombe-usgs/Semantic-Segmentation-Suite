@@ -5,6 +5,5 @@ submerged_sand
 bedrocktalus
 debrisfan
 muddy_debris
-null
 veg
 other
