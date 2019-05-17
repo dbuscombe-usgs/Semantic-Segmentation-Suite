@@ -1,7 +1,5 @@
 # Semantic Segmentation Suite in TensorFlow
 
-![alt-text-10](https://github.com/GeorgeSeif/Semantic-Segmentation-Suite/blob/master/Images/semseg.gif)
-
 ## News
 
 ### What's New
@@ -203,40 +201,13 @@ optional arguments:
                         for supported models
 
 ```
-    
-
-## Results
-
-These are some **sample results** for the CamVid dataset with 11 classes (previous research version).
-
-In training, I used a batch size of 1 and image size of 352x480. The following results are for the FC-DenseNet103 model trained for 300 epochs. I used RMSProp with learning rate 0.001 and decay 0.995. I **did not** use any data augmentation like in the paper. I also didn't use any class balancing. These are just some quick and dirty example results.
-
-**Note that the checkpoint files are not uploaded to this repository since they are too big for GitHub (greater than 100 MB)**
-
-
-| Class 	| Original Accuracy  	| My Accuracy |
-| ------------- 		| ------------- | -------------|
-| Sky  		| 93.0 | 94.1  |
-| Building 		| 83.0  | 81.2  |
-| Pole  		| 37.8  | 38.3  |
-| Road 		| 94.5  | 97.5  |
-| Pavement  		| 82.2  | 87.9  |
-| Tree 		| 77.3  | 75.5  |
-| SignSymbol  		| 43.9  | 49.7  |
-| Fence 		| 37.1  | 69.0  |
-| Car  		| 77.3  | 87.0  |
-| Pedestrian 		| 59.6  | 60.3  |
-| Bicyclist  		| 50.5  | 75.3  |
-| Unlabelled 		| N/A  | 40.9  |
-| Global  		| 91.5 | 89.6  |
 
 
 Loss vs Epochs            |  Val. Acc. vs Epochs
 :-------------------------:|:-------------------------:
-![alt text-1](https://github.com/GeorgeSeif/FC-DenseNet-Tiramisu/blob/master/Images/loss_vs_epochs.png)  |  ![alt text-2](https://github.com/GeorgeSeif/FC-DenseNet-Tiramisu/blob/master/Images/accuracy_vs_epochs.png)
+![alt text-1](https://user-images.githubusercontent.com/3596509/57955589-351aa900-78ee-11e9-8944-ff7769a1b645.png)  |  ![alt text-2](https://user-images.githubusercontent.com/3596509/57955613-419f0180-78ee-11e9-80f4-5ada1fc346e8.png)
 
-
-Original            |  GT   |  Result
-:-------------------------:|:-------------------------:|:-------------------------:
-![alt-text-3](https://github.com/GeorgeSeif/FC-DenseNet-Tiramisu/blob/master/Images/0001TP_008550.png "Original")  |  ![alt-text-4](https://github.com/GeorgeSeif/FC-DenseNet-Tiramisu/blob/master/Images/0001TP_008550_gt.png "GT")  |   ![alt-text-5](https://github.com/GeorgeSeif/FC-DenseNet-Tiramisu/blob/master/Images/0001TP_008550_pred.png "Result")
+IoU vs Epochs            
+:-------------------------
+![alt text-1](https://user-images.githubusercontent.com/3596509/57955618-4368c500-78ee-11e9-8131-45cb5a594b6d.png)  
 
